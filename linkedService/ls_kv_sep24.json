@@ -1,0 +1,11 @@
+{
+	"name": "ls_kv_sep24",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://KV-DEV-LS.vault.azure.net/"
+		}
+	}
+}
