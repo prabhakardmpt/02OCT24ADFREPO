@@ -1,0 +1,19 @@
+{
+	"name": "ls_blobsep24",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"description": "This is for blob using key vault",
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_kv_sep24",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sec-sepSA24"
+			}
+		}
+	}
+}

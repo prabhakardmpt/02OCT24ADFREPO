@@ -1,0 +1,24 @@
+{
+	"name": "ls_sqldb",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"server": "sspractice.database.windows.net",
+			"database": "sampledb",
+			"encrypt": "optional",
+			"trustServerCertificate": false,
+			"authenticationType": "SQL",
+			"userName": "prabhakar",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_kv_sep24",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "kv-sec-sqldbazure"
+			}
+		}
+	}
+}
