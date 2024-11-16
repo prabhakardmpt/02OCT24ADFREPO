@@ -1,0 +1,87 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "Sep24PracticeADF"
+		},
+		"SqlServer_common_linkedservice_password": {
+			"value": ""
+		},
+		"SqlServer_linkedservice_password": {
+			"value": ""
+		},
+		"sep24practice_connectionString": {
+			"value": ""
+		},
+		"shivalocaldb_SqlServer_linkedservice_common_password": {
+			"value": ""
+		},
+		"AzureSqlDatabase_linkeservice_properties_typeProperties_server": {
+			"value": "@{linkedService().serverName_cloud}"
+		},
+		"AzureSqlDatabase_linkeservice_properties_typeProperties_database": {
+			"value": "@{linkedService().dbName_cloud}"
+		},
+		"AzureSqlDatabase_linkeservice_properties_typeProperties_userName": {
+			"value": "@{linkedService().userName_cloud}"
+		},
+		"SqlServer_common_linkedservice_properties_typeProperties_server": {
+			"value": "LAPTOP-SRPRH5B1"
+		},
+		"SqlServer_common_linkedservice_properties_typeProperties_database": {
+			"value": "@{linkedService().dbName}"
+		},
+		"SqlServer_common_linkedservice_properties_typeProperties_userName": {
+			"value": "prabhakar"
+		},
+		"SqlServer_linkedservice_properties_typeProperties_server": {
+			"value": "LAPTOP-SRPRH5B1"
+		},
+		"SqlServer_linkedservice_properties_typeProperties_database": {
+			"value": "practice"
+		},
+		"SqlServer_linkedservice_properties_typeProperties_userName": {
+			"value": "Prabhakar"
+		},
+		"ls_blobsep24_properties_typeProperties_connectionString_secretName": {
+			"value": "sec-sepSA24"
+		},
+		"ls_kv_sep24_properties_typeProperties_baseUrl": {
+			"value": "https://KV-DEV-LS.vault.azure.net/"
+		},
+		"ls_sqldb_properties_typeProperties_server": {
+			"value": "sspractice.database.windows.net"
+		},
+		"ls_sqldb_properties_typeProperties_database": {
+			"value": "sampledb"
+		},
+		"ls_sqldb_properties_typeProperties_userName": {
+			"value": "prabhakar"
+		},
+		"shivalocaldb_SqlServer_linkedservice_common_properties_typeProperties_server": {
+			"value": "@{linkedService().serverNameinput}"
+		},
+		"shivalocaldb_SqlServer_linkedservice_common_properties_typeProperties_database": {
+			"value": "@{linkedService().dbNameinput}"
+		},
+		"shivalocaldb_SqlServer_linkedservice_common_properties_typeProperties_userName": {
+			"value": "shiva"
+		},
+		"eventtrigger_properties_typeProperties_scope": {
+			"value": "/subscriptions/1693b4f5-75a9-4581-8cc0-10266837daa3/resourceGroups/RG1TestGroup/providers/Microsoft.Storage/storageAccounts/sep24storageaccount"
+		},
+		"eventtrigger_setvaraible_properties_loadhour_dailysales_setVariable_parameters_fileName": {
+			"value": "@triggerBody().fileName"
+		},
+		"eventtrigger_setvaraible_properties_typeProperties_scope": {
+			"value": "/subscriptions/1693b4f5-75a9-4581-8cc0-10266837daa3/resourceGroups/RG1TestGroup/providers/Microsoft.Storage/storageAccounts/sep24storageaccount"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
