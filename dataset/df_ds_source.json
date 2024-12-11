@@ -1,0 +1,37 @@
+{
+	"name": "df_ds_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sep24practice",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "Nov24_1611.txt",
+				"folderPath": "input",
+				"container": "sep24"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": false,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "prabhakar",
+				"type": "String"
+			},
+			{
+				"name": " QA",
+				"type": "String"
+			},
+			{
+				"name": " AM",
+				"type": "String"
+			}
+		]
+	}
+}
