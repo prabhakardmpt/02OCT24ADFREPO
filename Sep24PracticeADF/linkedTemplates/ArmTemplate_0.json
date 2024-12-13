@@ -11,10 +11,6 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'sep24practice'"
 		},
-		"SqlServer_common_linkedservice_password": {
-			"type": "secureString",
-			"metadata": "Secure string for 'password' of 'SqlServer_common_linkedservice'"
-		},
 		"AzureSqlDatabase_linkeservice_properties_typeProperties_server": {
 			"type": "string",
 			"defaultValue": "@{linkedService().serverName_cloud}"
@@ -30,18 +26,6 @@
 		"ls_kv_sep24_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://KV-DEV-LS.vault.azure.net/"
-		},
-		"SqlServer_common_linkedservice_properties_typeProperties_server": {
-			"type": "string",
-			"defaultValue": "LAPTOP-SRPRH5B1"
-		},
-		"SqlServer_common_linkedservice_properties_typeProperties_database": {
-			"type": "string",
-			"defaultValue": "@{linkedService().dbName}"
-		},
-		"SqlServer_common_linkedservice_properties_typeProperties_userName": {
-			"type": "string",
-			"defaultValue": "prabhakar"
 		}
 	},
 	"variables": {
@@ -414,6 +398,48 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/df_ds_source')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sep24practice",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Nov24_1611.txt",
+						"folderPath": "input",
+						"container": "sep24"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": false,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "prabhakar",
+						"type": "String"
+					},
+					{
+						"name": " QA",
+						"type": "String"
+					},
+					{
+						"name": " AM",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sep24practice')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/event_csv_input')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -670,39 +696,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/sep24practice')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/SqlServer_common_linkedservice')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"parameters": {
-					"dbName": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "SqlServer",
-				"typeProperties": {
-					"server": "[parameters('SqlServer_common_linkedservice_properties_typeProperties_server')]",
-					"database": "[parameters('SqlServer_common_linkedservice_properties_typeProperties_database')]",
-					"encrypt": "optional",
-					"trustServerCertificate": false,
-					"authenticationType": "Windows",
-					"userName": "[parameters('SqlServer_common_linkedservice_properties_typeProperties_userName')]",
-					"password": {
-						"type": "SecureString",
-						"value": "[parameters('SqlServer_common_linkedservice_password')]"
-					}
-				},
-				"connectVia": {
-					"referenceName": "selfhostedIR",
-					"type": "IntegrationRuntimeReference"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/integrationRuntimes/selfhostedIR')]"
 			]
 		}
 	]

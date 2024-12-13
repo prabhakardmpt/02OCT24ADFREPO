@@ -25,6 +25,390 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/foreach_activity')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.folders",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Copy activityblob_blob",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"logSettings": {
+											"enableCopyActivityLog": true,
+											"copyActivityLogSettings": {
+												"logLevel": "Info",
+												"enableReliableLogging": false
+											},
+											"logLocationSettings": {
+												"linkedServiceName": {
+													"referenceName": "sep24practice",
+													"type": "LinkedServiceReference"
+												},
+												"path": "sep24/logs"
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "inputdataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "output_foreach",
+											"type": "DatasetReference",
+											"parameters": {
+												"folderName": {
+													"value": "@item()",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Stored procedure1",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "Copy activityblob_blob",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": {
+											"value": "@pipeline().parameters.sp_Name",
+											"type": "Expression"
+										},
+										"storedProcedureParameters": {
+											"ADFName": {
+												"value": {
+													"value": "@pipeline().DataFactory",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"Pipeline_Name": {
+												"value": {
+													"value": "@pipeline().Pipeline",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"Run_id": {
+												"value": {
+													"value": "@pipeline().RunId",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"Trigger_id": {
+												"value": {
+													"value": "@pipeline().TriggerId",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"Trigger_Name": {
+												"value": {
+													"value": "@pipeline().TriggerName",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"Trigger_time": {
+												"value": {
+													"value": "@pipeline().TriggerTime",
+													"type": "Expression"
+												},
+												"type": "DateTime"
+											},
+											"TriggerType": {
+												"value": {
+													"value": "@pipeline().TriggerType",
+													"type": "Expression"
+												},
+												"type": "String"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabase_linkeservice",
+										"type": "LinkedServiceReference",
+										"parameters": {
+											"serverName_cloud": {
+												"value": "@pipeline().parameters.serverName",
+												"type": "Expression"
+											},
+											"dbName_cloud": {
+												"value": "@pipeline().parameters.dbName",
+												"type": "Expression"
+											},
+											"userName_cloud": {
+												"value": "@pipeline().parameters.userName",
+												"type": "Expression"
+											},
+											"pwd_cloud": {
+												"value": "@pipeline().parameters.pwd",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"folders": {
+						"type": "Array",
+						"defaultValue": [
+							4,
+							5,
+							6
+						]
+					},
+					"serverName": {
+						"type": "string"
+					},
+					"dbName": {
+						"type": "string"
+					},
+					"userName": {
+						"type": "string"
+					},
+					"pwd": {
+						"type": "string"
+					},
+					"sp_Name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-09-18T13:28:40Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ifCondition_Activity')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "If Condition1",
+						"type": "IfCondition",
+						"dependsOn": [],
+						"userProperties": [
+							{
+								"name": "source value",
+								"value": "copy folder"
+							},
+							{
+								"name": "sink value",
+								"value": "copy folder2"
+							}
+						],
+						"typeProperties": {
+							"expression": {
+								"value": "@pipeline().parameters.outputvalue",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Copy data2",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings",
+												"copyBehavior": "FlattenHierarchy"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "inputdataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "location_outputdataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"outoutfolder": {
+													"value": "@pipeline().parameters.outputfolder2",
+													"type": "Expression"
+												},
+												"fileName": {
+													"value": "@pipeline().parameters.fileName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Copy data1",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "BinarySource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "BinaryReadSettings"
+											}
+										},
+										"sink": {
+											"type": "BinarySink",
+											"storeSettings": {
+												"type": "AzureBlobStorageWriteSettings"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "inputdataset",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "location_outputdataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"outoutfolder": {
+													"value": "@pipeline().parameters.outputfolder1",
+													"type": "Expression"
+												},
+												"fileName": {
+													"value": "@pipeline().parameters.fileName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"outputvalue": {
+						"type": "bool"
+					},
+					"outputfolder1": {
+						"type": "string"
+					},
+					"outputfolder2": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2024-09-24T17:14:22Z"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/localdb_csv_join condition')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -477,6 +861,51 @@
 				},
 				"annotations": [],
 				"lastPublishTime": "2024-09-21T05:44:20Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pipeline1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data flow1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"source1": {},
+									"source2": {},
+									"sink1": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
 			},
 			"dependsOn": []
 		},

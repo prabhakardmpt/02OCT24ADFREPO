@@ -7,6 +7,10 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "Sep24PracticeADF"
 		},
+		"SqlServer_common_linkedservice_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'SqlServer_common_linkedservice'"
+		},
 		"SqlServer_linkedservice_password": {
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'SqlServer_linkedservice'"
@@ -14,6 +18,18 @@
 		"shivalocaldb_SqlServer_linkedservice_common_password": {
 			"type": "secureString",
 			"metadata": "Secure string for 'password' of 'shivalocaldb_SqlServer_linkedservice_common'"
+		},
+		"SqlServer_common_linkedservice_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "LAPTOP-SRPRH5B1"
+		},
+		"SqlServer_common_linkedservice_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "@{linkedService().dbName}"
+		},
+		"SqlServer_common_linkedservice_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "prabhakar"
 		},
 		"SqlServer_linkedservice_properties_typeProperties_server": {
 			"type": "string",
@@ -60,6 +76,37 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/SqlServer_common_linkedservice')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"parameters": {
+					"dbName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"server": "[parameters('SqlServer_common_linkedservice_properties_typeProperties_server')]",
+					"database": "[parameters('SqlServer_common_linkedservice_properties_typeProperties_database')]",
+					"encrypt": "optional",
+					"trustServerCertificate": false,
+					"authenticationType": "Windows",
+					"userName": "[parameters('SqlServer_common_linkedservice_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('SqlServer_common_linkedservice_password')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "selfhostedIR",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": []
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/SqlServer_linkedservice')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
@@ -488,7 +535,9 @@
 					}
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SqlServer_common_linkedservice')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/SqlServer_shivadb')]",
@@ -648,6 +697,81 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/ls_blobsep24')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "df_ds_source",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						},
+						{
+							"dataset": {
+								"referenceName": "df_ds_source",
+								"type": "DatasetReference"
+							},
+							"name": "source2"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "df_ds_source",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "join1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          prabhakar as string,",
+						"          { QA} as string,",
+						"          { AM} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source(output(",
+						"          prabhakar as string,",
+						"          { QA} as string,",
+						"          { AM} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source2",
+						"source1, source2 join(source1@prabhakar == source2@prabhakar,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          prabhakar as string,",
+						"          { QA} as string,",
+						"          { AM} as string",
+						"     ),",
+						"     partitionFileNames:['outoutfile_df'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/copySS_AzureSS')]",
@@ -1211,394 +1335,6 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/SqlServer_shivadb')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/foreach_activity')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "ForEach1",
-						"type": "ForEach",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.folders",
-								"type": "Expression"
-							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "Copy activityblob_blob",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "BinarySource",
-											"storeSettings": {
-												"type": "AzureBlobStorageReadSettings",
-												"recursive": true
-											},
-											"formatSettings": {
-												"type": "BinaryReadSettings"
-											}
-										},
-										"sink": {
-											"type": "BinarySink",
-											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"logSettings": {
-											"enableCopyActivityLog": true,
-											"copyActivityLogSettings": {
-												"logLevel": "Info",
-												"enableReliableLogging": false
-											},
-											"logLocationSettings": {
-												"linkedServiceName": {
-													"referenceName": "sep24practice",
-													"type": "LinkedServiceReference"
-												},
-												"path": "sep24/logs"
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "inputdataset",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "output_foreach",
-											"type": "DatasetReference",
-											"parameters": {
-												"folderName": {
-													"value": "@item()",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								},
-								{
-									"name": "Stored procedure1",
-									"type": "SqlServerStoredProcedure",
-									"dependsOn": [
-										{
-											"activity": "Copy activityblob_blob",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"storedProcedureName": {
-											"value": "@pipeline().parameters.sp_Name",
-											"type": "Expression"
-										},
-										"storedProcedureParameters": {
-											"ADFName": {
-												"value": {
-													"value": "@pipeline().DataFactory",
-													"type": "Expression"
-												},
-												"type": "String"
-											},
-											"Pipeline_Name": {
-												"value": {
-													"value": "@pipeline().Pipeline",
-													"type": "Expression"
-												},
-												"type": "String"
-											},
-											"Run_id": {
-												"value": {
-													"value": "@pipeline().RunId",
-													"type": "Expression"
-												},
-												"type": "String"
-											},
-											"Trigger_id": {
-												"value": {
-													"value": "@pipeline().TriggerId",
-													"type": "Expression"
-												},
-												"type": "String"
-											},
-											"Trigger_Name": {
-												"value": {
-													"value": "@pipeline().TriggerName",
-													"type": "Expression"
-												},
-												"type": "String"
-											},
-											"Trigger_time": {
-												"value": {
-													"value": "@pipeline().TriggerTime",
-													"type": "Expression"
-												},
-												"type": "DateTime"
-											},
-											"TriggerType": {
-												"value": {
-													"value": "@pipeline().TriggerType",
-													"type": "Expression"
-												},
-												"type": "String"
-											}
-										}
-									},
-									"linkedServiceName": {
-										"referenceName": "AzureSqlDatabase_linkeservice",
-										"type": "LinkedServiceReference",
-										"parameters": {
-											"serverName_cloud": {
-												"value": "@pipeline().parameters.serverName",
-												"type": "Expression"
-											},
-											"dbName_cloud": {
-												"value": "@pipeline().parameters.dbName",
-												"type": "Expression"
-											},
-											"userName_cloud": {
-												"value": "@pipeline().parameters.userName",
-												"type": "Expression"
-											},
-											"pwd_cloud": {
-												"value": "@pipeline().parameters.pwd",
-												"type": "Expression"
-											}
-										}
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"folders": {
-						"type": "Array",
-						"defaultValue": [
-							4,
-							5,
-							6
-						]
-					},
-					"serverName": {
-						"type": "string"
-					},
-					"dbName": {
-						"type": "string"
-					},
-					"userName": {
-						"type": "string"
-					},
-					"pwd": {
-						"type": "string"
-					},
-					"sp_Name": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"lastPublishTime": "2024-09-18T13:28:40Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/inputdataset')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ifCondition_Activity')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "If Condition1",
-						"type": "IfCondition",
-						"dependsOn": [],
-						"userProperties": [
-							{
-								"name": "source value",
-								"value": "copy folder"
-							},
-							{
-								"name": "sink value",
-								"value": "copy folder2"
-							}
-						],
-						"typeProperties": {
-							"expression": {
-								"value": "@pipeline().parameters.outputvalue",
-								"type": "Expression"
-							},
-							"ifFalseActivities": [
-								{
-									"name": "Copy data2",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "BinarySource",
-											"storeSettings": {
-												"type": "AzureBlobStorageReadSettings",
-												"recursive": true
-											},
-											"formatSettings": {
-												"type": "BinaryReadSettings"
-											}
-										},
-										"sink": {
-											"type": "BinarySink",
-											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings",
-												"copyBehavior": "FlattenHierarchy"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "inputdataset",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "location_outputdataset",
-											"type": "DatasetReference",
-											"parameters": {
-												"outoutfolder": {
-													"value": "@pipeline().parameters.outputfolder2",
-													"type": "Expression"
-												},
-												"fileName": {
-													"value": "@pipeline().parameters.fileName",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							],
-							"ifTrueActivities": [
-								{
-									"name": "Copy data1",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "BinarySource",
-											"storeSettings": {
-												"type": "AzureBlobStorageReadSettings",
-												"recursive": true
-											},
-											"formatSettings": {
-												"type": "BinaryReadSettings"
-											}
-										},
-										"sink": {
-											"type": "BinarySink",
-											"storeSettings": {
-												"type": "AzureBlobStorageWriteSettings"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "inputdataset",
-											"type": "DatasetReference",
-											"parameters": {}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "location_outputdataset",
-											"type": "DatasetReference",
-											"parameters": {
-												"outoutfolder": {
-													"value": "@pipeline().parameters.outputfolder1",
-													"type": "Expression"
-												},
-												"fileName": {
-													"value": "@pipeline().parameters.fileName",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"outputvalue": {
-						"type": "bool"
-					},
-					"outputfolder1": {
-						"type": "string"
-					},
-					"outputfolder2": {
-						"type": "string"
-					},
-					"fileName": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"lastPublishTime": "2024-09-24T17:14:22Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/inputdataset')]"
 			]
 		}
 	]
